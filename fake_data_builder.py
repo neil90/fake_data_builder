@@ -1,5 +1,4 @@
 from faker import Faker
-import datetime
 import random
 import time
 import sys
@@ -64,6 +63,8 @@ def main():
 	start = time.time()
 	size = 0
 
+	print('Creating fake data file {0}...\n'.format(outfile))
+
 	with open(outfile, 'w', newline='') as csvfile:
 		csvwriter = csv.writer(csvfile)
 
@@ -87,16 +88,22 @@ def main():
 			csvwriter.writerow(row)
 
 			end = time.time()
+
 			block_amount = csvfile.tell()
 			block_amount_mb = '{:.2f}'.format(block_amount/(1024*1024))
-
-			percent_done = block_amount / outsize
-			percent_done_frmt = '{:.3%}'.format(percent_done)
-
+			percent_done_frmt = '{:.3%}'.format(block_amount / outsize)
 			outsize_mb = '{:.0f}'.format(outsize/(1024*1024))
 
 			if percent_done_frmt in percentage_print:
-				sys.stdout.write('\r' + percent_done_frmt + ' ' + block_amount_mb + '/' + outsize_mb + ' mb, ' + timer(start, end))
+				sys.stdout.write('\r' 
+								+ percent_done_frmt 
+								+ ' ' 
+								+ block_amount_mb 
+								+ '/' 
+								+ outsize_mb 
+								+ ' mb, ' 
+								+ timer(start, end))
+
 				sys.stdout.flush()
 
 if __name__ == "__main__":
