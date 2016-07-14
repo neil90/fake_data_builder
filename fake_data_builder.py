@@ -1,15 +1,39 @@
 from faker import Faker
+import datetime
 import random
 import time
 import sys
 import csv
 
-def sizeof_fmt(num, suffix='B'):
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+start = time.time()
+
+def progress_display(blk_size, exp_size):
+
+	end = time.time()
+	block_amount_mb = '{:.2f}'.format(blk_size/(1024*1024))
+	percent_done_frmt = '{:.2%}'.format(blk_size / exp_size)
+	outsize_mb = '{:.2f}'.format(exp_size/(1024*1024))
+
+	sys.stdout.write('\r'
+					+ percent_done_frmt
+					+ ' '
+					+ block_amount_mb
+					+ '/'
+					+ outsize_mb
+					+ ' mb, '
+					+ timer(start, end))
+
+	sys.stdout.flush()
+
+def percent_points(exp_size):
+ 
+	base_chunk = exp_size / 20
+	percentage_points = {}
+
+	for i in range(1, 21):
+		percentage_points[i] = base_chunk * i
+
+	return percentage_points
 
 def timer(start,end):
 	hours, rem = divmod(end-start, 3600)
@@ -50,25 +74,20 @@ def random_data_points():
 
 def main():
 
-	outfile = 'fake_data.csv'
-	outsize = 1024 * 1024 * 1024 #1gb file
-
-	#Janky way to print at percentage points
-	percentage_print = ['{:.3%}'.format(i/100) for i in range(0,105,5)]
+	percent_dict = percent_points(outsize)
 
 	#Get fake data Lists
 	profile_people = people()
 	amt_list, qty_list, purchase_date_list, product_list = random_data_points()
 
-	start = time.time()
-	size = 0
+	#size = 0
 
 	print('Creating fake data file {0}...\n'.format(outfile))
 
 	with open(outfile, 'w', newline='') as csvfile:
 		csvwriter = csv.writer(csvfile)
-
-		while csvfile.tell() < outsize:
+		i = 0
+		while csvfile.tell() <= outsize:
 			
 			profile = random.choice(profile_people)
 			
@@ -86,29 +105,21 @@ def main():
 			]
 			
 			csvwriter.writerow(row)
-
-			end = time.time()
-
 			block_amount = csvfile.tell()
-			block_amount_mb = '{:.2f}'.format(block_amount/(1024*1024))
-			percent_done_frmt = '{:.3%}'.format(block_amount / outsize)
-			outsize_mb = '{:.0f}'.format(outsize/(1024*1024))
+			try:
+				if block_amount >= percent_dict[i + 1]:
+					progress_display(block_amount, outsize)
 
-			if percent_done_frmt in percentage_print:
-				sys.stdout.write('\r' 
-								+ percent_done_frmt 
-								+ ' ' 
-								+ block_amount_mb 
-								+ '/' 
-								+ outsize_mb 
-								+ ' mb, ' 
-								+ timer(start, end))
+					i = i + 1
+			except:
+				pass
 
-				sys.stdout.flush()
+
+	progress_display(outsize, outsize)
 
 if __name__ == "__main__":
 
+	outfile = 'fake_data.csv'
+	outsize = 1024 * 1024 * 1024 #1gb file
+
 	main()
-
-
-
